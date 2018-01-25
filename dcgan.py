@@ -1,3 +1,7 @@
+# Code to do parameter estimation using a generative adversarial 
+# neural network.
+# Author: Hunter Gabbard
+
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import Reshape
@@ -13,6 +17,22 @@ from PIL import Image
 import argparse
 import math
 
+
+class bbhparams:
+    def __init__(self,mc,M,eta,m1,m2,ra,dec,iota,psi,idx,fmin,snr,SNR):
+        self.mc = mc
+        self.M = M
+        self.eta = eta
+        self.m1 = m1
+        self.m2 = m2
+        self.ra = ra
+        self.dec = dec
+        self.iota = iota
+        self.psi = psi
+        self.idx = idx
+        self.fmin = fmin
+        self.snr = snr
+        self.SNR = SNR
 
 def generator_model():
     model = Sequential()
@@ -75,11 +95,13 @@ def combine_images(generated_images):
 
 
 def train(BATCH_SIZE):
+    # define training/testing/validation sets here
     (X_train, y_train), (X_test, y_test) = mnist.load_data()
     X_train = (X_train.astype(np.float32) - 127.5)/127.5
     X_train = X_train[:, :, :, None]
     X_test = X_test[:, :, :, None]
-    # X_train = X_train.reshape((X_train.shape, 1) + X_train.shape[1:])
+
+    # train models
     d = discriminator_model()
     g = generator_model()
     d_on_g = generator_containing_discriminator(g, d)
@@ -146,7 +168,7 @@ def generate(BATCH_SIZE, nice=False):
 
 
 def get_args():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(prog='keras-dcgan.py', description='Generative Adversarial Neural Network in keras with tensorflow')
     parser.add_argument("--mode", type=str)
     parser.add_argument("--batch_size", type=int, default=128)
     parser.add_argument("--nice", dest="nice", action="store_true")
