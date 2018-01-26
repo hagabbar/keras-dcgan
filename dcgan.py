@@ -71,12 +71,12 @@ def generator_model():
     return model
 
 
-def discriminator_model():
+def discriminator_model(shape):
     model = Sequential()
     model.add(
             Conv2D(64, (5, 5),
             padding='same',
-            input_shape=(28, 28, 1))
+            input_shape=shape)
             )
     model.add(Activation('tanh'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
@@ -114,7 +114,7 @@ def combine_images(generated_images):
     return image
 
 
-def train(args, netargs, shape, outdir, x_train, y_train, x_val, y_val, x_test, y_test, samp_weights=None):
+def train(args, netargs, shape, outdir, X_train, y_train, X_val, y_val, X_test, y_test, samp_weights=None):
     # define training/testing/validation sets here
     #(X_train, y_train), (X_test, y_test) = mnist.load_data()
     #X_train = (X_train.astype(np.float32) - 127.5)/127.5
