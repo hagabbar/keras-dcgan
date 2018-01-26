@@ -57,35 +57,55 @@ class network_args:
 def generator_model():
     model = Sequential()
     model.add(Dense(input_dim=100, output_dim=1024))
-    model.add(Activation('tanh'))
-    model.add(Dense(128*7*7))
+    model.add(Activation('elu'))
+    model.add(Dense(128*1*1))
     model.add(BatchNormalization())
-    model.add(Activation('tanh'))
-    model.add(Reshape((7, 7, 128), input_shape=(128*7*7,)))
-    model.add(UpSampling2D(size=(2, 2)))
-    model.add(Conv2D(64, (5, 5), padding='same'))
-    model.add(Activation('tanh'))
-    model.add(UpSampling2D(size=(2, 2)))
-    model.add(Conv2D(1, (5, 5), padding='same'))
-    model.add(Activation('tanh'))
+    model.add(Activation('elu'))
+    model.add(Reshape((1, 1, 128), input_shape=(128*1*1,)))
+    model.add(UpSampling2D(size=(1, 1)))
+    model.add(Conv2D(64, (1, 5), padding='same'))
+    model.add(Activation('elu'))
+    model.add(UpSampling2D(size=(1, 1)))
+    model.add(Conv2D(8192, (1, 5), padding='same'))
+    model.add(Activation('elu'))
     return model
 
 
 def discriminator_model(shape):
     model = Sequential()
     model.add(
-            Conv2D(64, (5, 5),
-            padding='same',
-            input_shape=shape)
+            Conv2D(64, (1, 1),
+            padding='valid',
+            data_format='channels_first',
+            input_shape=shape,
+            strides=(1,1))
             )
-    model.add(Activation('tanh'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Conv2D(128, (5, 5)))
-    model.add(Activation('tanh'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Activation('elu'))
+    model.add(
+            MaxPooling2D(
+            pool_size=(1, 1),
+            strides=(1,64),
+            padding='valid',
+            data_format='channels_first')
+            )
+    model.add(
+              Conv2D(128, (1, 1),
+              padding='valid',
+              data_format='channels_first',
+              input_shape=shape,
+              strides=(1,1))
+             )
+    model.add(Activation('elu'))
+    model.add(
+             MaxPooling2D(pool_size=(1, 1),
+             strides=(1,1),
+             padding='valid',
+             data_format='channels_first',
+             input_shape=shape)
+             )
     model.add(Flatten())
     model.add(Dense(1024))
-    model.add(Activation('tanh'))
+    model.add(Activation('elu'))
     model.add(Dense(1))
     model.add(Activation('sigmoid'))
     return model
@@ -120,11 +140,12 @@ def train(args, netargs, shape, outdir, X_train, y_train, X_val, y_val, X_test, 
     #X_train = (X_train.astype(np.float32) - 127.5)/127.5
     #X_train = X_train[:, :, :, None]
     #X_test = X_test[:, :, :, None]
+    BATCH_SIZE=args.batch_size
 
     
 
     # train models
-    d = discriminator_model()
+    d = discriminator_model(shape)
     g = generator_model()
     d_on_g = generator_containing_discriminator(g, d)
     d_optim = SGD(lr=0.0005, momentum=0.9, nesterov=True)
@@ -133,7 +154,7 @@ def train(args, netargs, shape, outdir, X_train, y_train, X_val, y_val, X_test, 
     d_on_g.compile(loss='binary_crossentropy', optimizer=g_optim)
     d.trainable = True
     d.compile(loss='binary_crossentropy', optimizer=d_optim)
-    for epoch in range(100):
+    for epoch in range(args.n_epochs):
         print("Epoch is", epoch)
         print("Number of batches", int(X_train.shape[0]/BATCH_SIZE))
         for index in range(int(X_train.shape[0]/BATCH_SIZE)):
@@ -145,6 +166,8 @@ def train(args, netargs, shape, outdir, X_train, y_train, X_val, y_val, X_test, 
                 image = image*127.5+127.5
                 Image.fromarray(image.astype(np.uint8)).save(
                     str(epoch)+"_"+str(index)+".png")
+            print(image_batch.shape)
+            print(generated_images.shape)
             X = np.concatenate((image_batch, generated_images))
             y = [1] * BATCH_SIZE + [0] * BATCH_SIZE
             d_loss = d.train_on_batch(X, y)

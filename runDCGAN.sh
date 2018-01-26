@@ -7,7 +7,7 @@
 #export LIBRARY_PATH=$LIBRARY_PATH:/home/2136420/theanoenv/lib
 #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/2136420/theanoenv/lib
 
-export CUDA_VISIBLE_DEVICES=1
+export CUDA_VISIBLE_DEVICES=0,1,2
 
 #####################
 # Running the network
@@ -58,8 +58,8 @@ val_params=/home/hunter.gabbard/glasgow/github_repo_code/cnn_matchfiltering/data
 #test_params=/home/chrism/deepdata_bbh/BBH_testing_1s_8192Hz_10Ksamp_25n_iSNR${1}_Hdet_${2}_1seed_params_0.sav
 #val_params=/home/chrism/deepdata_bbh/BBH_validation_1s_8192Hz_10Ksamp_25n_iSNR${1}_Hdet_${2}_1seed_params_0.sav
 
-Nts=100000               # Number of time series
-Nval=10000              # Number of time series for validation/testing
+Nts=10000               # Number of time series
+Nval=1000               # Number of time series for validation/testing
 Ntot=10
 
 # Learning constraints:
@@ -69,7 +69,7 @@ decay=0.0
 stepsize=1000
 momentum=0.9
 n_epochs=200
-batch_size=64
+batch_size=32
 patience=10
 LRpatience=5
 
